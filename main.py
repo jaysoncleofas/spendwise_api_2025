@@ -9,7 +9,7 @@ from pathlib import Path
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="ExpenseWise API",
+    title="SpendWise API",
     description="Expense Management Application API",
     version="1.0.0",
     redirect_slashes=False  # Prevent redirect issues with CORS
@@ -47,7 +47,7 @@ app.mount("/uploads/avatars", StaticFiles(directory=str(avatars_dir)), name="ava
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to ExpenseWise API"}
+    return {"message": "Welcome to SpendWise API"}
 
 @app.get("/health")
 async def health_check():
