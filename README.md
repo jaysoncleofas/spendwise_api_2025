@@ -1,6 +1,6 @@
-# ExpenseWise Backend API
+# SpendWise Backend API
 
-FastAPI-based backend for ExpenseWise expense management application.
+FastAPI-based backend for SpendWise expense management application.
 
 ## Setup
 
@@ -18,7 +18,7 @@ pip install -r requirements.txt
 ### 3. Configure Database
 Create a MySQL database:
 ```sql
-CREATE DATABASE expensewise CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE spendwise CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ### 4. Environment Variables
@@ -29,7 +29,7 @@ cp .env.example .env
 
 Edit `.env`:
 ```env
-DATABASE_URL=mysql+pymysql://username:password@localhost:3306/expensewise
+DATABASE_URL=mysql+pymysql://username:password@localhost:3306/spendwise
 SECRET_KEY=your-super-secret-key-change-this
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
@@ -199,7 +199,7 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 ### Environment Variables for Production
 ```env
-DATABASE_URL=mysql+pymysql://user:pass@db-host:3306/expensewise
+DATABASE_URL=mysql+pymysql://user:pass@db-host:3306/spendwise
 SECRET_KEY=very-secure-secret-key-for-production
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=1440
