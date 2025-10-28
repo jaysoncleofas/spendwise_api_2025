@@ -2,6 +2,22 @@
 
 FastAPI-based backend for SpendWise expense management application.
 
+## Features
+
+- 🔐 **User Authentication** - JWT-based authentication with secure password hashing
+- 💰 **Wallet Management** - Multiple wallets with different currencies and balances
+- 🏷️ **Category Management** - Organize transactions with custom categories
+- 💳 **Transaction Tracking** - Income, Expense, and Transfer transactions
+- 📊 **Advanced Analytics** - Comprehensive financial reports and insights
+- 💵 **Budget System** - Monthly and fixed budgets with rollover support
+- 🔁 **Recurring Transactions** - Automate bill payments and subscriptions
+- 📷 **Receipt Management** - Upload and store receipts with OCR text extraction
+- 🏷️ **Tags System** - Flexible tagging for better transaction organization
+- 💱 **Multi-Currency** - Support for different currencies with exchange rates
+- 🔔 **Notifications** - Budget alerts and transaction reminders
+- 📤 **Data Export** - Export transactions to CSV format
+- 👤 **Profile Management** - User profiles with avatar upload support
+
 ## Setup
 
 ### 1. Create Virtual Environment
@@ -18,16 +34,11 @@ pip install -r requirements.txt
 ### 3. Configure Database
 Create a MySQL database:
 ```sql
-CREATE DATABASE spendwise CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE spendwise CHARACTER SET utf8o4 COLLATE utf8o4_unicode_ci;
 ```
 
 ### 4. Environment Variables
-Copy `.env.example` to `.env` and configure:
-```bash
-cp .env.example .env
-```
-
-Edit `.env`:
+Create a `.env` file with the following variables:
 ```env
 DATABASE_URL=mysql+pymysql://username:password@localhost:3306/spendwise
 SECRET_KEY=your-super-secret-key-change-this
@@ -49,10 +60,12 @@ The API will be available at:
 
 ### User
 - id (primary key)
-- email (unique)
-- username (unique)
+- email (unique, indexed)
+- username (unique, indexed)
 - hashed_password
 - full_name
+- avatar_url
+- home_currency
 - created_at
 - updated_at
 
@@ -76,6 +89,11 @@ The API will be available at:
 - icon
 - color
 - budget_limit
+- budget_type (monthly/fixed)
+- budget_start_date
+- fixed_budget_spent
+- budget_rollover
+- rollover_balance
 - created_at
 - updated_at
 
@@ -89,8 +107,77 @@ The API will be available at:
 - notes
 - transaction_date
 - transfer_wallet_id (for transfers)
+- recurring_transaction_id (for automated transactions)
 - created_at
 - updated_at
+
+### RecurringTransaction
+- id (primary key)
+- user_id (foreign key)
+- wallet_id (foreign key)
+- category_id (foreign key)
+- transaction_type
+- amount
+- description
+- notes
+- transfer_wallet_id
+- frequency (daily/weekly/monthly/yearly)
+- start_date
+- end_date
+- next_occurrence
+- is_active
+- created_at
+- updated_at
+
+### Receipt
+- id (primary key)
+- transaction_id (foreign key)
+- user_id (foreign key)
+- filename
+- original_filename
+- file_path
+- file_type
+- file_size
+- ocr_text
+- uploaded_at
+
+### Tag
+- id (primary key)
+- user_id (foreign key)
+- name
+- color
+- created_at
+
+### TransactionTag
+- id (primary key)
+- transaction_id (foreign key)
+- tag_id (foreign key)
+- created_at
+
+### Notification
+- id (primary key)
+- user_id (foreign key)
+- type
+- title
+- message
+- is_read
+- related_id
+- created_at
+
+### ExchangeRate
+- id (primary key)
+- from_currency
+- to_currency
+- rate
+- updated_at
+
+### ExchangeRateHistory
+- id (primary key)
+- from_currency
+- to_currency
+- rate
+- source
+- recorded_at
 
 ## API Routes
 
@@ -98,6 +185,11 @@ The API will be available at:
 - POST `/register` - Register new user
 - POST `/login` - Login (returns JWT token)
 - GET `/me` - Get current user info
+
+### Profile (`/api/profile`)
+- GET `/` - Get user profile
+- PUT `/` - Update user profile
+- POST `/avatar` - Upload avatar image
 
 ### Wallets (`/api/wallets`)
 - GET `/` - List all user wallets
@@ -130,6 +222,56 @@ The API will be available at:
 - GET `/wallets/summary` - All wallets summary
 - GET `/categories/top-expenses` - Top expense categories
 
+### Budgets (`/api/budgets`)
+- GET `/status` - Get budget status for all categories
+- GET `/alerts` - Get budget alerts (warning, critical, danger)
+- GET `/history/{category_id}` - Get budget history for a category
+- PUT `/rollover/{category_id}` - Toggle budget rollover
+
+### Recurring Transactions (`/api/recurring`)
+- GET `/` - List all recurring transactions
+- POST `/` - Create recurring transaction
+- GET `/{id}` - Get specific recurring transaction
+- PUT `/{id}` - Update recurring transaction
+- DELETE `/{id}` - Delete recurring transaction
+- PUT `/{id}/pause` - Pause recurring transaction
+- PUT `/{id}/resume` - Resume recurring transaction
+- POST `/process-due` - Process all due recurring transactions
+
+### Receipts (`/api/receipts`)
+- GET `/` - List all receipts with search and filters
+- POST `/upload/{transaction_id}` - Upload receipt for a transaction
+- GET `/{id}` - Get specific receipt details
+- GET `/{id}/download` - Download receipt file
+- GET `/{id}/view` - View receipt (serve image)
+- DELETE `/{id}` - Delete receipt
+
+### Tags (`/api/tags`)
+- GET `/` - List all user tags
+- POST `/` - Create new tag
+- GET `/{id}` - Get specific tag
+- PUT `/{id}` - Update tag
+- DELETE `/{id}` - Delete tag
+- GET `/analytics` - Get tag usage analytics
+- GET `/top-tags` - Get most used tags
+
+### Currency (`/api/currency`)
+- GET `/convert` - Convert between currencies
+- GET `/rates` - Get exchange rates
+- GET `/rates/{from_currency}/{to_currency}` - Get specific rate
+- POST `/rates` - Add/update exchange rate
+
+### Notifications (`/api/notifications`)
+- GET `/` - List all notifications
+- GET `/unread-count` - Get unread notification count
+- PUT `/{id}/read` - Mark notification as read
+- PUT `/read-all` - Mark all notifications as read
+- DELETE `/{id}` - Delete notification
+- POST `/check-alerts` - Check for budget alerts
+
+### Exports (`/api/exports`)
+- GET `/transactions/csv` - Export transactions to CSV
+
 ## Authentication
 
 This API uses JWT (JSON Web Tokens) for authentication.
@@ -137,7 +279,9 @@ This API uses JWT (JSON Web Tokens) for authentication.
 ### Getting a Token
 ```bash
 curl -X POST "http://localhost:8000/api/auth/login" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
+  -H "Content-Type:!
+
+: application/x-www-form-urlencoded" \
   -d "username=your_username&password=your_password"
 ```
 
@@ -148,19 +292,46 @@ curl -X GET "http://localhost:8000/api/wallets" \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 ```
 
+## Key Features Documentation
+
+### Budget System
+The budget system supports two types:
+- **Monthly Budgets**: Reset each month, with optional rollover of unused amounts
+- **Fixed Budgets**: One-time budget with a start date and no end date
+
+Budget alerts are automatically generated when spending reaches:
+- 80% of budget (warning)
+- 90% of budget (critical)
+- 100% of budget (danger)
+
+### Recurring Transactions
+Automatically create transactions based on:
+- **Frequency**: Daily, Weekly, Monthly, or Yearly
+- **Start Date**: When to begin recurring
+- **End Date**: Optional end date (null for indefinite)
+- Auto-processing: Manually trigger or setup automated processing
+
+### Receipt Management
+- Upload receipts as images (JPEG, PNG, HEIC) or PDFs
+- Automatic OCR text extraction (requires pytesseract)
+- Search receipts by filename, transaction details, or OCR text
+- Maximum file size: 10MB
+
+### Multi-Currency Support
+- Each wallet can have its own currency
+- Exchange rates are stored and can be updated manually
+- Automatic currency conversion when viewing transactions
+
+### Notification System
+Notifications are generated for:
+- Budget warnings, critical alerts, and overspending
+- Low wallet balance alerts
+- Bill payment reminders
+
 ## Development
 
-### Database Migrations (Optional - for future)
-```bash
-# Initialize alembic
-alembic init alembic
-
-# Create migration
-alembic revision --autogenerate -m "Initial migration"
-
-# Apply migration
-alembic upgrade head
-```
+### Database Migrations
+Migrations are handled manually through SQL scripts in the `migrations/` directory.
 
 ### Running Tests
 ```bash
@@ -205,6 +376,19 @@ ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=1440
 ```
 
+## Dependencies
+
+- **FastAPI** - Modern web framework
+- **SQLAlchemy** - ORM for database operations
+- **PyMySQL** - MySQL database driver
+- **Python-JOSE** - JWT token handling
+- **Passlib** - Password hashing with bcrypt
+- **Python-Multipart** - File upload support
+- **Pytesseract** - OCR text extraction
+- **Pillow** - Image processing
+- **Requests** - HTTP client for external APIs
+- **Email-Validator** - Email validation
+
 ## Security Considerations
 
 1. **Change the SECRET_KEY** in production
@@ -239,8 +423,14 @@ ACCESS_TOKEN_EXPIRE_MINUTES=1440
 - Verify token is not expired
 - Ensure token is sent in Authorization header
 
+### OCR Not Working
+- Install Tesseract OCR: `brew install tesseract` (Mac) or `apt-get install tesseract-ocr` (Linux)
+- Ensure pytesseract and Pillow are installed
+
 ## API Documentation
 
 Full interactive API documentation is available at `/docs` when the server is running.
 
+## License
 
+MIT License
