@@ -97,7 +97,6 @@ async def upload_avatar(
             try:
                 old_file_path.unlink()
             except Exception as e:
-                print(f"Error deleting old avatar: {e}")
     
     # Save new avatar
     with open(file_path, "wb") as f:
@@ -129,7 +128,6 @@ async def delete_avatar(
         try:
             avatar_path.unlink()
         except Exception as e:
-            print(f"Error deleting avatar: {e}")
     
     # Update user
     current_user.avatar_url = None

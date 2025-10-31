@@ -125,15 +125,15 @@ async def get_budget_alerts(
             # Don't alert on high progress - that's good!
             if status.percentage >= 100:
                 # Completed - positive alert
-                message = f"🎉 {status.category_name} completed! Fully paid ${status.spent:.2f} of ${status.budget_limit:.2f}"
+                message = f"{status.category_name} completed! Fully paid ${status.spent:.2f} of ${status.budget_limit:.2f}"
                 severity = "completed"
             elif status.percentage < 50:
                 # Low progress - critical alert
-                message = f"⚠️ {status.category_name} needs attention: Only {status.percentage:.1f}% completed"
+                message = f"{status.category_name} needs attention: Only {status.percentage:.1f}% completed"
                 severity = "critical"
             elif status.percentage < 80:
                 # Moderate progress - warning to keep going
-                message = f"📊 {status.category_name} at {status.percentage:.1f}% - Keep making progress!"
+                message = f"{status.category_name} at {status.percentage:.1f}% - Keep making progress!"
                 severity = "warning"
             # Don't alert for 50-99% as that's good progress
             else:

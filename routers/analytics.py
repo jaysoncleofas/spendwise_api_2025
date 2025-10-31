@@ -275,20 +275,14 @@ def get_spending_heatmap(
             day_of_week_col, hour_col
         ).all()
         
-        print(f"Heatmap query returned {len(transactions)} groups")
-        
         for trans in transactions:
             # MySQL DAYOFWEEK returns 1-7 (1=Sunday), convert to 0-6 (0=Sunday)
             day = (int(trans.day_of_week) - 1) if trans.day_of_week else 0
             hour = int(trans.hour)
-            print(f"Processing: day={day}, hour={hour}, amount={trans.total_amount}")
             if 0 <= day < 7 and 0 <= hour < 24:  # Safety check
                 heatmap_data[day][hour] = float(trans.total_amount)
     except Exception as e:
-        # Log error but return empty heatmap instead of failing
-        import traceback
-        print(f"Error fetching heatmap data: {e}")
-        print(traceback.format_exc())
+        # Return empty heatmap instead of failing
     
     return {
         "period": f"last_{days}_days",

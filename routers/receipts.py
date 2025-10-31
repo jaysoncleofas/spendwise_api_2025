@@ -26,9 +26,6 @@ try:
     from PIL import Image
     OCR_ENABLED = True
 except ImportError:
-    print("Warning: pytesseract or PIL not installed. OCR functionality disabled.")
-    print("To enable OCR, install: pip install pytesseract pillow")
-    print("And install Tesseract: brew install tesseract (Mac) or apt-get install tesseract-ocr (Linux)")
 
 def extract_text_from_image_bytes(image_bytes: bytes) -> Optional[str]:
     """Extract text from an image using OCR (process in memory, no file saved)"""
@@ -40,7 +37,6 @@ def extract_text_from_image_bytes(image_bytes: bytes) -> Optional[str]:
         text = pytesseract.image_to_string(image)
         return text.strip() if text else None
     except Exception as e:
-        print(f"OCR extraction failed: {e}")
         return None
 
 def parse_ocr_text(ocr_text: str) -> dict:
@@ -178,10 +174,6 @@ async def upload_receipt(
         # Re-raise HTTP exceptions as-is
         raise
     except Exception as e:
-        # Log unexpected errors
-        print(f"Receipt upload error: {type(e).__name__}: {str(e)}")
-        import traceback
-        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=f"Internal server error during upload: {str(e)}"
