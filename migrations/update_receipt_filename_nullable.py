@@ -4,6 +4,10 @@ Run this if you want to allow NULL values for filename and file_path
 (Since we're not storing files anymore)
 """
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
+
 from sqlalchemy import text
 from database import engine
 
