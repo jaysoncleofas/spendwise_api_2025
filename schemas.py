@@ -205,7 +205,7 @@ class BudgetAlert(BaseModel):
     category_id: int
     category_name: str
     message: str
-    severity: str  # warning, critical, danger
+    severity: str  # warning, critical, danger, completed
     percentage: float
     spent: float
     budget_limit: float

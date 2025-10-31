@@ -124,14 +124,14 @@ class Receipt(Base):
     __tablename__ = "receipts"
     
     id = Column(Integer, primary_key=True, index=True)
-    transaction_id = Column(Integer, ForeignKey("transactions.id", ondelete="CASCADE"), nullable=False, index=True)
+    transaction_id = Column(Integer, ForeignKey("transactions.id", ondelete="CASCADE"), nullable=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    filename = Column(String(255), nullable=False)
-    original_filename = Column(String(255), nullable=False)
-    file_path = Column(String(500), nullable=False)
+    filename = Column(String(255), nullable=True)  # Not storing files anymore
+    original_filename = Column(String(255), nullable=False)  # Keep for reference
+    file_path = Column(String(500), nullable=True)  # Not storing files anymore
     file_type = Column(String(50), nullable=False)  # image/jpeg, image/png, application/pdf
     file_size = Column(Integer, nullable=False)  # in bytes
-    ocr_text = Column(Text, nullable=True)  # Extracted text from OCR
+    ocr_text = Column(Text, nullable=True)  # Extracted text from OCR - this is what we store
     uploaded_at = Column(DateTime, default=func.now())
     
     transaction = relationship("Transaction")

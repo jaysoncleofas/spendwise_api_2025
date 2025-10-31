@@ -71,14 +71,29 @@ async def get_budget_status(
         percentage = (spent / effective_budget * 100) if effective_budget > 0 else 0
         
         # Determine status
-        if percentage >= 100:
-            alert_level = "danger"
-        elif percentage >= 90:
-            alert_level = "critical"
-        elif percentage >= 80:
-            alert_level = "warning"
+        # For fixed categories: positive progression (like paying off a loan)
+        # - More completion = better status (inverted from monthly)
+        # For monthly categories: standard budget tracking
+        # - More spending = worse status
+        if budget_type == "fixed":
+            if percentage >= 100:
+                alert_level = "completed"  # Fully paid/completed
+            elif percentage >= 80:
+                alert_level = "safe"  # Almost there, good progress
+            elif percentage >= 50:
+                alert_level = "warning"  # Halfway there, keep going
+            else:
+                alert_level = "critical"  # Low progress, need to catch up
         else:
-            alert_level = "safe"
+            # Monthly budgets: standard budget tracking
+            if percentage >= 100:
+                alert_level = "danger"  # Over budget
+            elif percentage >= 90:
+                alert_level = "critical"  # Almost over budget
+            elif percentage >= 80:
+                alert_level = "warning"  # Getting close
+            else:
+                alert_level = "safe"  # Within budget
         
         budget_statuses.append(BudgetStatus(
             category_id=category.id,
@@ -100,31 +115,55 @@ async def get_budget_alerts(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get active budget alerts (80%+ usage)"""
+    """Get active budget alerts"""
     budget_statuses = await get_budget_status(current_user, db)
     
     alerts = []
     for status in budget_statuses:
-        if status.percentage >= 80:
+        if status.budget_type == "fixed":
+            # For fixed categories: alert on LOW progress (need to catch up)
+            # Don't alert on high progress - that's good!
             if status.percentage >= 100:
+                # Completed - positive alert
+                message = f"🎉 {status.category_name} completed! Fully paid ${status.spent:.2f} of ${status.budget_limit:.2f}"
+                severity = "completed"
+            elif status.percentage < 50:
+                # Low progress - critical alert
+                message = f"⚠️ {status.category_name} needs attention: Only {status.percentage:.1f}% completed"
+                severity = "critical"
+            elif status.percentage < 80:
+                # Moderate progress - warning to keep going
+                message = f"📊 {status.category_name} at {status.percentage:.1f}% - Keep making progress!"
+                severity = "warning"
+            # Don't alert for 50-99% as that's good progress
+            else:
+                continue  # 80-99% is safe/good progress, no alert needed
+        else:
+            # For monthly categories: alert on HIGH usage (standard budget tracking)
+            if status.percentage > 100:
                 message = f"Budget exceeded for {status.category_name}! Spent ${status.spent:.2f} of ${status.budget_limit:.2f}"
+                severity = "danger"
+            elif status.percentage == 100:
+                message = f"Budget limit reached for {status.category_name}. Spent ${status.spent:.2f} of ${status.budget_limit:.2f}"
                 severity = "danger"
             elif status.percentage >= 90:
                 message = f"Critical: {status.category_name} budget at {status.percentage:.1f}%"
                 severity = "critical"
-            else:
+            elif status.percentage >= 80:
                 message = f"Warning: {status.category_name} budget at {status.percentage:.1f}%"
                 severity = "warning"
+            else:
+                continue  # Below 80% is safe, no alert
             
-            alerts.append(BudgetAlert(
-                category_id=status.category_id,
-                category_name=status.category_name,
-                message=message,
-                severity=severity,
-                percentage=status.percentage,
-                spent=status.spent,
-                budget_limit=status.budget_limit
-            ))
+        alerts.append(BudgetAlert(
+            category_id=status.category_id,
+            category_name=status.category_name,
+            message=message,
+            severity=severity,
+            percentage=status.percentage,
+            spent=status.spent,
+            budget_limit=status.budget_limit
+        ))
     
     return alerts
 
