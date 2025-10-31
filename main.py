@@ -16,13 +16,20 @@ app = FastAPI(
 )
 
 # CORS configuration
+# IMPORTANT: Order matters - CORS middleware must be added before routes
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # Nuxt.js default port
+    allow_origins=[
+        "http://localhost:3000", 
+        "http://127.0.0.1:3000",
+        "https://spendwise.on-forge.com",  # Production frontend
+        "https://www.spendwise.on-forge.com",  # With www if needed
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],  # Explicit methods
     allow_headers=["*"],
     expose_headers=["*"],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 # Include routers
