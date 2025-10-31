@@ -11,7 +11,7 @@ FastAPI-based backend for SpendWise expense management application.
 - 📊 **Advanced Analytics** - Comprehensive financial reports and insights
 - 💵 **Budget System** - Monthly and fixed budgets with rollover support
 - 🔁 **Recurring Transactions** - Automate bill payments and subscriptions
-- 📷 **Receipt Management** - Upload and store receipts with OCR text extraction
+- 📷 **Receipt Management** - Upload receipts with OCR text extraction (text-only storage to save server space)
 - 🏷️ **Tags System** - Flexible tagging for better transaction organization
 - 💱 **Multi-Currency** - Support for different currencies with exchange rates
 - 🔔 **Notifications** - Budget alerts and transaction reminders
@@ -133,12 +133,12 @@ The API will be available at:
 - id (primary key)
 - transaction_id (foreign key)
 - user_id (foreign key)
-- filename
+- filename (original filename for reference)
 - original_filename
-- file_path
+- file_path (empty, files not stored)
 - file_type
 - file_size
-- ocr_text
+- ocr_text (extracted text content stored)
 - uploaded_at
 
 ### Tag
@@ -239,12 +239,12 @@ The API will be available at:
 - POST `/process-due` - Process all due recurring transactions
 
 ### Receipts (`/api/receipts`)
-- GET `/` - List all receipts with search and filters
-- POST `/upload/{transaction_id}` - Upload receipt for a transaction
+- GET `/` - List all receipts with search and filters (includes transaction details)
+- POST `/upload/{transaction_id}` - Upload receipt (extracts OCR text, stores text only)
 - GET `/{id}` - Get specific receipt details
-- GET `/{id}/download` - Download receipt file
-- GET `/{id}/view` - View receipt (serve image)
-- DELETE `/{id}` - Delete receipt
+- GET `/{id}/download` - Get OCR text content as JSON (files not stored)
+- DELETE `/{id}` - Delete receipt record
+- GET `/transaction/{transaction_id}` - Get receipts for a specific transaction
 
 ### Tags (`/api/tags`)
 - GET `/` - List all user tags
@@ -295,14 +295,28 @@ curl -X GET "http://localhost:8000/api/wallets" \
 ## Key Features Documentation
 
 ### Budget System
-The budget system supports two types:
-- **Monthly Budgets**: Reset each month, with optional rollover of unused amounts
-- **Fixed Budgets**: One-time budget with a start date and no end date
+The budget system supports two types with different tracking logic:
 
-Budget alerts are automatically generated when spending reaches:
-- 80% of budget (warning)
-- 90% of budget (critical)
-- 100% of budget (danger)
+#### Monthly Budgets
+- Reset each month, with optional rollover of unused amounts
+- Standard budget tracking: spending more = worse status
+- Alerts generated when spending reaches:
+  - 80-89% of budget (warning)
+  - 90-99% of budget (critical)
+  - 100%+ of budget (danger - exceeded)
+  - Exactly 100% shows "Budget limit reached" message
+
+#### Fixed Budgets
+- One-time budget with a start date and no end date
+- Positive progression tracking (like paying off a loan): more completion = better status
+- Status levels:
+  - 0-49%: Critical alert (low progress, need to catch up)
+  - 50-79%: Warning alert (moderate progress, keep going)
+  - 80-99%: Safe status (good progress)
+  - 100%+: Completed status (green, goal achieved!)
+- Completion alerts show positive messaging (e.g., "🎉 Budget completed!")
+
+The system automatically differentiates between fixed and monthly budgets for appropriate status levels.
 
 ### Recurring Transactions
 Automatically create transactions based on:
@@ -314,8 +328,12 @@ Automatically create transactions based on:
 ### Receipt Management
 - Upload receipts as images (JPEG, PNG, HEIC) or PDFs
 - Automatic OCR text extraction (requires pytesseract)
+- **Text-Only Storage**: Only OCR-extracted text is stored (files are not saved to disk)
+- This saves server storage space while preserving searchable text content
 - Search receipts by filename, transaction details, or OCR text
+- Receipts can be linked to transactions
 - Maximum file size: 10MB
+- Returns OCR text as JSON when downloading
 
 ### Multi-Currency Support
 - Each wallet can have its own currency
