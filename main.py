@@ -10,7 +10,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="SpendWise API",
-    description="Finance Management Application API",
+    description="Finance Tracker Management Application API",
     version="1.0.0",
     redirect_slashes=False  # Prevent redirect issues with CORS
 )
