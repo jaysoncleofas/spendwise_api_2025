@@ -283,6 +283,7 @@ def get_spending_heatmap(
                 heatmap_data[day][hour] = float(trans.total_amount)
     except Exception as e:
         # Return empty heatmap instead of failing
+        pass
     
     return {
         "period": f"last_{days}_days",
