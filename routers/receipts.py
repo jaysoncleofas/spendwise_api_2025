@@ -26,6 +26,7 @@ try:
     from PIL import Image
     OCR_ENABLED = True
 except ImportError:
+    pass
 
 def extract_text_from_image_bytes(image_bytes: bytes) -> Optional[str]:
     """Extract text from an image using OCR (process in memory, no file saved)"""
